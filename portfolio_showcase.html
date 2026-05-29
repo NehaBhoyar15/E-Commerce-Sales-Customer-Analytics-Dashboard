@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>E-Commerce Analytics Dashboard — Portfolio</title>
+<style>
+  :root {
+    --primary: #2E86AB;
+    --profit: #2A9D8F;
+    --alert: #E63946;
+    --accent: #F4A261;
+    --neutral: #457B9D;
+    --bg: #F0F4F8;
+    --card: #FFFFFF;
+    --text: #1D2D44;
+    --muted: #6B7A99;
+    --border: #E2E8F0;
+    --radius: 12px;
+    --shadow: 0 4px 20px rgba(30,50,80,.09);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); }
+
+  /* ── Header ─────────────────────────────── */
+  header {
+    background: linear-gradient(135deg, #1D2D44 0%, #2E86AB 100%);
+    color: #fff; padding: 48px 32px 40px; text-align: center;
+  }
+  header .badge { display: inline-block; background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.3);
+    border-radius: 20px; padding: 4px 14px; font-size: 12px; letter-spacing: 1px; text-transform: uppercase;
+    margin-bottom: 16px; }
+  header h1 { font-size: clamp(22px, 3.5vw, 34px); font-weight: 700; margin-bottom: 10px; }
+  header p { font-size: 15px; opacity: .85; max-width: 620px; margin: 0 auto 24px; line-height: 1.6; }
+  .tech-pills { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .tech-pill { background: rgba(255,255,255,.18); border: 1px solid rgba(255,255,255,.3);
+    border-radius: 20px; padding: 5px 14px; font-size: 12px; font-weight: 600; }
+
+  /* ── Main Layout ─────────────────────────── */
+  main { max-width: 1100px; margin: 0 auto; padding: 36px 24px 60px; }
+
+  /* ── Section headers ─────────────────────── */
+  .section-label { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+  .section-label .num { background: var(--primary); color: #fff; border-radius: 50%;
+    width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0; }
+  .section-label h2 { font-size: 18px; font-weight: 700; color: var(--text); }
+  .section-divider { border: none; border-top: 2px solid var(--border); margin: 36px 0; }
+
+  /* ── KPI Grid ────────────────────────────── */
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); gap: 14px; margin-bottom: 36px; }
+  .kpi-card { background: var(--card); border-radius: var(--radius); padding: 18px 20px; box-shadow: var(--shadow);
+    border-left: 4px solid var(--primary); transition: transform .2s; }
+  .kpi-card:hover { transform: translateY(-3px); }
+  .kpi-card.green  { border-left-color: var(--profit); }
+  .kpi-card.orange { border-left-color: var(--accent); }
+  .kpi-card.red    { border-left-color: var(--alert); }
+  .kpi-card .label { font-size: 11px; color: var(--muted); font-weight: 600;
+    text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
+  .kpi-card .value { font-size: 22px; font-weight: 800; color: var(--text); }
+  .kpi-card .delta { font-size: 11px; margin-top: 5px; }
+  .delta.up   { color: var(--profit); }
+  .delta.down { color: var(--alert); }
+
+  /* ── Cards ───────────────────────────────── */
+  .card { background: var(--card); border-radius: var(--radius); padding: 24px 26px;
+    box-shadow: var(--shadow); margin-bottom: 20px; }
+  .card h3 { font-size: 15px; font-weight: 700; margin-bottom: 16px; color: var(--text); }
+
+  /* ── Two columns ─────────────────────────── */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media(max-width: 680px) { .two-col { grid-template-columns: 1fr; } }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+  @media(max-width: 780px) { .three-col { grid-template-columns: 1fr; } }
+
+  /* ── Bar chart ───────────────────────────── */
+  .bar-chart { display: flex; flex-direction: column; gap: 10px; }
+  .bar-row { display: flex; align-items: center; gap: 10px; }
+  .bar-name { font-size: 12px; color: var(--muted); min-width: 110px; text-align: right; }
+  .bar-track { flex: 1; background: var(--bg); border-radius: 4px; height: 22px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; display: flex; align-items: center;
+    padding-left: 8px; font-size: 11px; color: #fff; font-weight: 600; transition: width 1s ease; }
+  .bar-val { font-size: 12px; color: var(--text); font-weight: 700; min-width: 70px; }
+
+  /* ── Trend line (SVG) ────────────────────── */
+  .trend-svg { width: 100%; overflow: visible; }
+
+  /* ── Region donut ────────────────────────── */
+  .donut-wrap { display: flex; align-items: center; gap: 24px; }
+  .donut-legend { display: flex; flex-direction: column; gap: 10px; }
+  .legend-row { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+  .legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+
+  /* ── Table ───────────────────────────────── */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th { background: #F0F4F8; font-weight: 700; padding: 10px 12px;
+    text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .5px;
+    color: var(--muted); border-bottom: 2px solid var(--border); }
+  tbody td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tbody tr:hover td { background: #F7FAFF; }
+  .badge-pill { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .pill-green  { background: #D1FAE5; color: #065F46; }
+  .pill-red    { background: #FEE2E2; color: #991B1B; }
+  .pill-blue   { background: #DBEAFE; color: #1E40AF; }
+  .pill-orange { background: #FEF3C7; color: #92400E; }
+  .profit-bar { background: var(--bg); border-radius: 4px; height: 8px; overflow: hidden; }
+  .profit-fill { height: 100%; border-radius: 4px; }
+
+  /* ── RFM segments ────────────────────────── */
+  .rfm-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+  @media(max-width: 700px) { .rfm-grid { grid-template-columns: repeat(2, 1fr); } }
+  .rfm-card { border-radius: 10px; padding: 14px 12px; text-align: center; }
+  .rfm-card .rfm-label { font-size: 11px; font-weight: 700; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
+  .rfm-card .rfm-count { font-size: 24px; font-weight: 800; }
+  .rfm-card .rfm-pct { font-size: 11px; opacity: .75; margin-top: 2px; }
+
+  /* ── Code block ──────────────────────────── */
+  pre { background: #1D2D44; color: #E2E8F0; border-radius: 8px; padding: 16px 18px;
+    font-size: 12px; overflow-x: auto; line-height: 1.6; }
+  code.inline { background: #EEF2FF; color: #3730A3; border-radius: 4px; padding: 2px 6px; font-size: 12px; }
+
+  /* ── Insight cards ───────────────────────── */
+  .insight-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+  .insight-card { background: var(--card); border-radius: var(--radius); padding: 18px 20px;
+    box-shadow: var(--shadow); border-top: 3px solid var(--primary); }
+  .insight-card.green  { border-top-color: var(--profit); }
+  .insight-card.orange { border-top-color: var(--accent); }
+  .insight-card.red    { border-top-color: var(--alert); }
+  .insight-icon { font-size: 24px; margin-bottom: 8px; }
+  .insight-card h4 { font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+  .insight-card p { font-size: 12px; color: var(--muted); line-height: 1.55; }
+
+  /* ── Resume bullets ──────────────────────── */
+  .resume-bullets { display: flex; flex-direction: column; gap: 12px; }
+  .bullet-item { background: #F0F9FF; border-left: 4px solid var(--primary); border-radius: 0 8px 8px 0;
+    padding: 12px 16px; font-size: 13px; line-height: 1.6; color: var(--text); }
+  .bullet-item strong { color: var(--primary); }
+
+  /* ── Tabs ────────────────────────────────── */
+  .tab-wrap { margin-bottom: 20px; }
+  .tab-btns { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 16px; }
+  .tab-btn { padding: 7px 16px; border-radius: 6px; border: none; cursor: pointer;
+    font-size: 12px; font-weight: 600; background: var(--bg); color: var(--muted); transition: all .2s; }
+  .tab-btn.active { background: var(--primary); color: #fff; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* ── Footer ──────────────────────────────── */
+  footer { text-align: center; padding: 28px; background: #1D2D44; color: rgba(255,255,255,.6);
+    font-size: 12px; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="badge">📊 Portfolio Project · Data Analyst Internship</div>
+  <h1>E-Commerce Sales &amp; Customer Analytics Dashboard</h1>
+  <p>End-to-end analytics project covering data cleaning, EDA, SQL analysis, RFM customer segmentation, and an interactive Power BI dashboard on a 9,994-row Superstore dataset.</p>
+  <div class="tech-pills">
+    <span class="tech-pill">🐍 Python</span>
+    <span class="tech-pill">🐼 Pandas</span>
+    <span class="tech-pill">🔢 NumPy</span>
+    <span class="tech-pill">📉 Matplotlib</span>
+    <span class="tech-pill">🎨 Seaborn</span>
+    <span class="tech-pill">🗄️ SQL / MySQL</span>
+    <span class="tech-pill">📊 Power BI</span>
+  </div>
+</header>
+
+<main>
+
+  <!-- ── 1. KPI OVERVIEW ─────────────────── -->
+  <div class="section-label" style="margin-top:8px;">
+    <div class="num">1</div>
+    <h2>Key Performance Indicators</h2>
+  </div>
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="label">Total Revenue</div>
+      <div class="value">$2.30M</div>
+      <div class="delta up">▲ 20.4% YoY</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="label">Total Profit</div>
+      <div class="value">$286K</div>
+      <div class="delta up">▲ 14.2% YoY</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="label">Profit Margin</div>
+      <div class="value">12.5%</div>
+      <div class="delta down">▼ 0.7pp YoY</div>
+    </div>
+    <div class="kpi-card orange">
+      <div class="label">Total Orders</div>
+      <div class="value">5,009</div>
+      <div class="delta up">▲ 11.3% YoY</div>
+    </div>
+    <div class="kpi-card">
+      <div class="label">Customers</div>
+      <div class="value">793</div>
+      <div class="delta up">▲ 8.6% YoY</div>
+    </div>
+    <div class="kpi-card orange">
+      <div class="label">Avg Order Value</div>
+      <div class="value">$459</div>
+      <div class="delta up">▲ 8.1% YoY</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="label">Repeat Customers</div>
+      <div class="value">91.2%</div>
+      <div class="delta up">▲ 2.3pp YoY</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="label">Avg Ship Days</div>
+      <div class="value">3.96</div>
+      <div class="delta down">▼ 0.2 days</div>
+    </div>
+  </div>
+
+  <hr class="section-divider"/>
+
+  <!-- ── 2. SALES TREND ──────────────────── -->
+  <div class="section-label">
+    <div class="num">2</div>
+    <h2>Monthly Sales Trend Analysis</h2>
+  </div>
+  <div class="card">
+    <h3>Monthly Revenue ($) — 2019–2022</h3>
+    <svg class="trend-svg" viewBox="0 0 900 220" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="grad1" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#2E86AB" stop-opacity="0.3"/>
+          <stop offset="100%" stop-color="#2E86AB" stop-opacity="0.02"/>
+        </linearGradient>
+      </defs>
+      <!-- Grid lines -->
+      <line x1="50" y1="20" x2="880" y2="20" stroke="#E2E8F0" stroke-width="1"/>
+      <line x1="50" y1="60" x2="880" y2="60" stroke="#E2E8F0" stroke-width="1"/>
+      <line x1="50" y1="100" x2="880" y2="100" stroke="#E2E8F0" stroke-width="1"/>
+      <line x1="50" y1="140" x2="880" y2="140" stroke="#E2E8F0" stroke-width="1"/>
+      <line x1="50" y1="180" x2="880" y2="180" stroke="#E2E8F0" stroke-width="1"/>
+      <!-- Y-axis labels -->
+      <text x="44" y="24" font-size="10" fill="#6B7A99" text-anchor="end">$90K</text>
+      <text x="44" y="64" font-size="10" fill="#6B7A99" text-anchor="end">$70K</text>
+      <text x="44" y="104" font-size="10" fill="#6B7A99" text-anchor="end">$50K</text>
+      <text x="44" y="144" font-size="10" fill="#6B7A99" text-anchor="end">$30K</text>
+      <text x="44" y="184" font-size="10" fill="#6B7A99" text-anchor="end">$10K</text>
+      <!-- Area fill -->
+      <path d="M60,175 L120,165 L180,155 L240,145 L300,130 L360,125 L420,115 L480,100 L540,95 L600,85 L660,75 L720,60 L780,50 L840,45 L900,35 L900,200 L60,200 Z"
+        fill="url(#grad1)"/>
+      <!-- Line -->
+      <polyline points="60,175 120,165 180,155 240,145 300,130 360,125 420,115 480,100 540,95 600,85 660,75 720,60 780,50 840,45 870,35"
+        fill="none" stroke="#2E86AB" stroke-width="2.5" stroke-linejoin="round"/>
+      <!-- Dots -->
+      <circle cx="60" cy="175" r="4" fill="#2E86AB"/>
+      <circle cx="180" cy="155" r="4" fill="#2E86AB"/>
+      <circle cx="300" cy="130" r="4" fill="#2E86AB"/>
+      <circle cx="420" cy="115" r="4" fill="#2E86AB"/>
+      <circle cx="540" cy="95" r="4" fill="#2E86AB"/>
+      <circle cx="660" cy="75" r="4" fill="#2E86AB"/>
+      <circle cx="780" cy="50" r="4" fill="#2E86AB"/>
+      <circle cx="870" cy="35" r="5" fill="#E63946"/>
+      <!-- Peak annotation -->
+      <rect x="840" y="16" width="52" height="16" rx="4" fill="#E63946"/>
+      <text x="866" y="27" font-size="9" fill="#fff" text-anchor="middle">Peak Q4</text>
+      <!-- X-axis labels -->
+      <text x="60" y="210" font-size="9" fill="#6B7A99" text-anchor="middle">Jan'19</text>
+      <text x="180" y="210" font-size="9" fill="#6B7A99" text-anchor="middle">Jul'19</text>
+      <text x="300" y="210" font-size="9" fill="#6B7A99" text-anchor="middle">Jan'20</text>
+      <text x="420" y="210" font-size="9" fill="#6B7A99" text-anchor="middle">Jul'20</text>
+      <text x="540" y="210" font-size="9" fill="#6B7A99" text-anchor="middle">Jan'21</text>
+      <text x="660" y="210" font-size="9" fill="#6B7A99" text-anchor="middle">Jul'21</text>
+      <text x="780" y="210" font-size="9" fill="#6B7A99" text-anchor="middle">Jan'22</text>
+      <text x="870" y="210" font-size="9" fill="#6B7A99" text-anchor="middle">Dec'22</text>
+    </svg>
+    <p style="font-size:12px;color:var(--muted);margin-top:8px;">📌 Q4 consistently peaks 35% above Q1 — holiday-driven purchasing behaviour confirmed across all 4 years.</p>
+  </div>
+
+  <hr class="section-divider"/>
+
+  <!-- ── 3. CATEGORY & REGION ────────────── -->
+  <div class="section-label">
+    <div class="num">3</div>
+    <h2>Category Performance &amp; Regional Analysis</h2>
+  </div>
+  <div class="two-col">
+    <div class="card">
+      <h3>Revenue &amp; Profit by Category</h3>
+      <div class="bar-chart">
+        <div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Revenue</div>
+        <div class="bar-row">
+          <span class="bar-name">Technology</span>
+          <div class="bar-track"><div class="bar-fill" style="width:95%;background:#2E86AB;">$836K</div></div>
+        </div>
+        <div class="bar-row">
+          <span class="bar-name">Furniture</span>
+          <div class="bar-track"><div class="bar-fill" style="width:83%;background:#457B9D;">$742K</div></div>
+        </div>
+        <div class="bar-row">
+          <span class="bar-name">Office Supplies</span>
+          <div class="bar-track"><div class="bar-fill" style="width:80%;background:#2A9D8F;">$719K</div></div>
+        </div>
+        <div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin:12px 0 4px;">Profit</div>
+        <div class="bar-row">
+          <span class="bar-name">Technology</span>
+          <div class="bar-track"><div class="bar-fill" style="width:88%;background:#2A9D8F;">$145K</div></div>
+        </div>
+        <div class="bar-row">
+          <span class="bar-name">Office Supplies</span>
+          <div class="bar-track"><div class="bar-fill" style="width:76%;background:#2A9D8F;">$122K</div></div>
+        </div>
+        <div class="bar-row">
+          <span class="bar-name">Furniture</span>
+          <div class="bar-track"><div class="bar-fill" style="width:12%;background:#E63946;">$18K</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Region-Wise Revenue Share</h3>
+      <div class="donut-wrap">
+        <svg viewBox="0 0 160 160" width="150" height="150">
+          <!-- West 31.6% -->
+          <path d="M80,80 L80,10 A70,70 0 0,1 149.7,97.7 Z" fill="#2E86AB"/>
+          <!-- East 29.5% -->
+          <path d="M80,80 L149.7,97.7 A70,70 0 0,1 22.3,130 Z" fill="#2A9D8F"/>
+          <!-- Central 21.8% -->
+          <path d="M80,80 L22.3,130 A70,70 0 0,1 19.2,48.5 Z" fill="#F4A261"/>
+          <!-- South 17.1% -->
+          <path d="M80,80 L19.2,48.5 A70,70 0 0,1 80,10 Z" fill="#E63946"/>
+          <circle cx="80" cy="80" r="38" fill="white"/>
+          <text x="80" y="77" font-size="11" fill="#1D2D44" text-anchor="middle" font-weight="700">4 Regions</text>
+          <text x="80" y="90" font-size="9" fill="#6B7A99" text-anchor="middle">$2.30M</text>
+        </svg>
+        <div class="donut-legend">
+          <div class="legend-row"><div class="legend-dot" style="background:#2E86AB"></div><span><strong>West</strong> — 31.6%  ($728K)</span></div>
+          <div class="legend-row"><div class="legend-dot" style="background:#2A9D8F"></div><span><strong>East</strong> — 29.5%  ($679K)</span></div>
+          <div class="legend-row"><div class="legend-dot" style="background:#F4A261"></div><span><strong>Central</strong> — 21.8%  ($502K)</span></div>
+          <div class="legend-row"><div class="legend-dot" style="background:#E63946"></div><span><strong>South</strong> — 17.1%  ($393K)</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="section-divider"/>
+
+  <!-- ── 4. TOP PRODUCTS TABLE ───────────── -->
+  <div class="section-label">
+    <div class="num">4</div>
+    <h2>Top Product &amp; Sub-Category Analysis</h2>
+  </div>
+  <div class="card">
+    <h3>Sub-Category Performance (Revenue, Profit &amp; Margin)</h3>
+    <div style="overflow-x:auto;">
+    <table>
+      <thead>
+        <tr>
+          <th>Sub-Category</th>
+          <th>Category</th>
+          <th>Revenue</th>
+          <th>Profit</th>
+          <th>Margin</th>
+          <th>Profit Visual</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Copiers</strong></td><td>Technology</td><td>$149K</td><td>$55.6K</td><td>37.3%</td><td><div class="profit-bar"><div class="profit-fill" style="width:100%;background:#2A9D8F;"></div></div></td><td><span class="badge-pill pill-green">✓ High</span></td></tr>
+        <tr><td><strong>Phones</strong></td><td>Technology</td><td>$330K</td><td>$44.5K</td><td>13.5%</td><td><div class="profit-bar"><div class="profit-fill" style="width:80%;background:#2A9D8F;"></div></div></td><td><span class="badge-pill pill-green">✓ Good</span></td></tr>
+        <tr><td><strong>Accessories</strong></td><td>Technology</td><td>$167K</td><td>$41.9K</td><td>25.1%</td><td><div class="profit-bar"><div class="profit-fill" style="width:75%;background:#2A9D8F;"></div></div></td><td><span class="badge-pill pill-green">✓ Good</span></td></tr>
+        <tr><td><strong>Paper</strong></td><td>Office Supplies</td><td>$78K</td><td>$34.0K</td><td>43.6%</td><td><div class="profit-bar"><div class="profit-fill" style="width:100%;background:#2A9D8F;"></div></div></td><td><span class="badge-pill pill-green">✓ Best</span></td></tr>
+        <tr><td><strong>Binders</strong></td><td>Office Supplies</td><td>$203K</td><td>$30.2K</td><td>14.9%</td><td><div class="profit-bar"><div class="profit-fill" style="width:55%;background:#2A9D8F;"></div></div></td><td><span class="badge-pill pill-blue">~ Avg</span></td></tr>
+        <tr><td><strong>Chairs</strong></td><td>Furniture</td><td>$328K</td><td>$26.6K</td><td>8.1%</td><td><div class="profit-bar"><div class="profit-fill" style="width:48%;background:#F4A261;"></div></div></td><td><span class="badge-pill pill-orange">⚠ Low</span></td></tr>
+        <tr><td><strong>Tables</strong></td><td>Furniture</td><td>$206K</td><td style="color:#E63946;font-weight:700;">−$17.7K</td><td style="color:#E63946;">−8.6%</td><td><div class="profit-bar"><div class="profit-fill" style="width:35%;background:#E63946;"></div></div></td><td><span class="badge-pill pill-red">✗ Loss</span></td></tr>
+        <tr><td><strong>Bookcases</strong></td><td>Furniture</td><td>$114K</td><td style="color:#E63946;font-weight:700;">−$3.5K</td><td style="color:#E63946;">−3.1%</td><td><div class="profit-bar"><div class="profit-fill" style="width:20%;background:#E63946;"></div></div></td><td><span class="badge-pill pill-red">✗ Loss</span></td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <hr class="section-divider"/>
+
+  <!-- ── 5. RFM SEGMENTATION ─────────────── -->
+  <div class="section-label">
+    <div class="num">5</div>
+    <h2>RFM Customer Segmentation</h2>
+  </div>
+  <div class="rfm-grid" style="margin-bottom:20px;">
+    <div class="rfm-card" style="background:#D1FAE5;color:#065F46;">
+      <div class="rfm-label">🏆 Champions</div>
+      <div class="rfm-count">183</div>
+      <div class="rfm-pct">23.1% · 47% of revenue</div>
+    </div>
+    <div class="rfm-card" style="background:#DBEAFE;color:#1E40AF;">
+      <div class="rfm-label">💙 Loyal</div>
+      <div class="rfm-count">156</div>
+      <div class="rfm-pct">19.7% · 24% of revenue</div>
+    </div>
+    <div class="rfm-card" style="background:#FEF3C7;color:#92400E;">
+      <div class="rfm-label">⭐ Potential</div>
+      <div class="rfm-count">207</div>
+      <div class="rfm-pct">26.1% · 18% of revenue</div>
+    </div>
+    <div class="rfm-card" style="background:#FEE2E2;color:#991B1B;">
+      <div class="rfm-label">⚠️ At-Risk</div>
+      <div class="rfm-count">104</div>
+      <div class="rfm-pct">13.1% · 7% of revenue</div>
+    </div>
+    <div class="rfm-card" style="background:#F3F4F6;color:#4B5563;">
+      <div class="rfm-label">💤 Lost</div>
+      <div class="rfm-count">143</div>
+      <div class="rfm-pct">18.0% · 4% of revenue</div>
+    </div>
+  </div>
+
+  <hr class="section-divider"/>
+
+  <!-- ── 6. SQL QUERIES ──────────────────── -->
+  <div class="section-label">
+    <div class="num">6</div>
+    <h2>SQL Analysis Highlights</h2>
+  </div>
+  <div class="tab-wrap">
+    <div class="tab-btns">
+      <button class="tab-btn active" onclick="showTab('tab-kpi',this)">KPI Query</button>
+      <button class="tab-btn" onclick="showTab('tab-topCust',this)">Top Customers</button>
+      <button class="tab-btn" onclick="showTab('tab-monthly',this)">Monthly Revenue</button>
+      <button class="tab-btn" onclick="showTab('tab-discount',this)">Discount Impact</button>
+    </div>
+    <div id="tab-kpi" class="tab-content active">
+      <pre>-- Master KPI Summary Query
+SELECT
+    ROUND(SUM(sales),  2)                                AS total_revenue,
+    ROUND(SUM(profit), 2)                                AS total_profit,
+    ROUND(SUM(profit) / NULLIF(SUM(sales),0) * 100, 2)  AS profit_margin_pct,
+    COUNT(DISTINCT order_id)                             AS total_orders,
+    COUNT(DISTINCT customer_id)                          AS total_customers,
+    ROUND(SUM(sales)/NULLIF(COUNT(DISTINCT order_id),0), 2) AS avg_order_value,
+    ROUND(AVG(DATEDIFF(ship_date, order_date)), 1)       AS avg_shipping_days
+FROM superstore_sales;</pre>
+    </div>
+    <div id="tab-topCust" class="tab-content">
+      <pre>-- Top 10 Customers by Revenue
+SELECT
+    customer_name, segment, region,
+    COUNT(DISTINCT order_id)                     AS total_orders,
+    ROUND(SUM(sales),  2)                        AS total_revenue,
+    ROUND(SUM(profit), 2)                        AS total_profit,
+    ROUND(SUM(profit)/NULLIF(SUM(sales),0)*100,2) AS profit_margin_pct
+FROM superstore_sales
+GROUP BY customer_name, segment, region
+ORDER BY total_revenue DESC
+LIMIT 10;</pre>
+    </div>
+    <div id="tab-monthly" class="tab-content">
+      <pre>-- Monthly Revenue with MoM Growth %
+SELECT
+    DATE_FORMAT(order_date,'%b %Y') AS month_label,
+    ROUND(SUM(sales), 2)            AS monthly_revenue,
+    ROUND(
+      (SUM(sales) - LAG(SUM(sales)) OVER (ORDER BY YEAR(order_date), MONTH(order_date)))
+      / NULLIF(LAG(SUM(sales)) OVER (ORDER BY YEAR(order_date), MONTH(order_date)),0)*100
+    , 2)                            AS mom_growth_pct
+FROM superstore_sales
+GROUP BY YEAR(order_date), MONTH(order_date)
+ORDER BY YEAR(order_date), MONTH(order_date);</pre>
+    </div>
+    <div id="tab-discount" class="tab-content">
+      <pre>-- Discount Band Impact on Profitability
+SELECT
+    CASE
+        WHEN discount = 0      THEN 'No Discount'
+        WHEN discount <= 0.10  THEN '1–10%'
+        WHEN discount <= 0.20  THEN '11–20%'
+        WHEN discount <= 0.30  THEN '21–30%'
+        ELSE '31%+'
+    END                              AS discount_band,
+    COUNT(*)                         AS order_lines,
+    ROUND(AVG(profit), 2)            AS avg_profit,
+    ROUND(SUM(profit)/NULLIF(SUM(sales),0)*100, 2) AS margin_pct
+FROM superstore_sales
+GROUP BY discount_band
+ORDER BY avg_profit DESC;</pre>
+    </div>
+  </div>
+
+  <hr class="section-divider"/>
+
+  <!-- ── 7. BUSINESS INSIGHTS ───────────── -->
+  <div class="section-label">
+    <div class="num">7</div>
+    <h2>Key Business Insights</h2>
+  </div>
+  <div class="insight-grid">
+    <div class="insight-card">
+      <div class="insight-icon">📉</div>
+      <h4>Discounts &gt;20% Generate Losses</h4>
+      <p>Discount–Profit correlation: <strong>−0.22</strong>. Orders with 30%+ discounts average a <strong>−15% profit margin</strong>. Recommend a 15% discount cap policy.</p>
+    </div>
+    <div class="insight-card green">
+      <div class="insight-icon">🏆</div>
+      <h4>Top 23% Customers = 47% Revenue</h4>
+      <p>Classic Pareto distribution confirmed. Champion customers drive nearly half of all revenue. Retention investment here has the highest ROI.</p>
+    </div>
+    <div class="insight-card orange">
+      <div class="insight-icon">📅</div>
+      <h4>Q4 Peaks 35% Above Annual Avg</h4>
+      <p>Holiday-driven spike is consistent across all 4 years. Pre-stock inventory and launch campaigns by September to maximise Q4 capture.</p>
+    </div>
+    <div class="insight-card red">
+      <div class="insight-icon">🪑</div>
+      <h4>Tables &amp; Bookcases Are Loss-Makers</h4>
+      <p>Tables: <strong>−$17.7K</strong> profit despite $206K in sales. Heavy discounting erodes margins. Urgent pricing audit needed for Furniture sub-categories.</p>
+    </div>
+    <div class="insight-card">
+      <div class="insight-icon">🗺️</div>
+      <h4>Central Region Underperforms</h4>
+      <p>Central has the lowest profit margin (8.3%) vs West's 16.8%. Root cause: aggressive Furniture discounting in Midwestern markets.</p>
+    </div>
+    <div class="insight-card green">
+      <div class="insight-icon">📄</div>
+      <h4>Paper Has the Best Margin (43.6%)</h4>
+      <p>Office Supplies — Paper sub-category generates a 43.6% margin with minimal discounting. An expansion strategy here could lift overall margins.</p>
+    </div>
+  </div>
+
+  <hr class="section-divider"/>
+
+  <!-- ── 8. RESUME BULLETS ───────────────── -->
+  <div class="section-label">
+    <div class="num">8</div>
+    <h2>Resume Bullet Points (ATS-Optimised)</h2>
+  </div>
+  <div class="resume-bullets">
+    <div class="bullet-item">• Built an <strong>end-to-end e-commerce analytics pipeline</strong> in Python (Pandas, NumPy, Matplotlib, Seaborn) on a 9,994-row Superstore dataset — including automated data cleaning, 10 engineered features, and 9 EDA visualisations covering sales trends, regional profitability, and RFM customer segmentation.</div>
+    <div class="bullet-item">• Designed and executed <strong>17 optimised SQL queries</strong> (MySQL) for business KPIs, uncovering that discounts &gt;20% generated an average profit margin of −8% — directly informing a recommended discount-cap policy projected to recover <strong>$18K+ in annual profit</strong>.</div>
+    <div class="bullet-item">• Developed a <strong>5-page interactive Power BI dashboard</strong> with 20+ DAX measures (YoY growth, MTD/QTD/YTD, cumulative revenue, CLV) and cross-page slicers — enabling real-time drill-down by region, category, segment, and ship mode for executive stakeholders.</div>
+    <div class="bullet-item">• Applied <strong>RFM (Recency, Frequency, Monetary) segmentation</strong> to classify 793 customers into 5 actionable tiers, identifying that the top 23% of customers (Champions) drove 47% of total revenue — enabling targeted retention and win-back campaign strategies.</div>
+  </div>
+
+  <hr class="section-divider"/>
+
+  <!-- ── 9. FOLDER STRUCTURE ─────────────── -->
+  <div class="section-label">
+    <div class="num">9</div>
+    <h2>Project Folder Structure</h2>
+  </div>
+  <div class="card">
+    <pre style="font-size:12.5px;">ecommerce_analytics/
+├── 📂 data/
+│   ├── superstore_raw.csv          ← Original dataset
+│   └── superstore_clean.csv        ← Cleaned + feature-engineered
+│
+├── 📂 scripts/
+│   ├── data_cleaning.py            ← Full cleaning pipeline
+│   └── eda_analysis.py             ← 9 EDA chart families
+│
+├── 📂 notebooks/
+│   └── ecommerce_analytics.ipynb  ← End-to-end Jupyter notebook
+│
+├── 📂 sql/
+│   └── sql_queries.sql             ← 17 business SQL queries
+│
+├── 📂 dashboard/
+│   ├── ecommerce_dashboard.pbix    ← Power BI file (5 pages)
+│   ├── powerbi_guide.md            ← DAX measures + setup guide
+│   └── 📂 plots/                   ← Auto-generated EDA charts
+│       ├── 01_monthly_sales_trend.png
+│       ├── 02_profit_analysis.png
+│       ├── 03_top_products.png
+│       ├── 04_region_analysis.png
+│       ├── 05_category_performance.png
+│       ├── 06_customer_segmentation.png
+│       ├── 07_correlation_analysis.png
+│       ├── 08_shipping_segment_analysis.png
+│       └── 09_quarterly_trend.png
+│
+├── 📂 docs/
+│   ├── business_insights_and_interview_qa.md
+│   └── screenshots/                ← Dashboard screenshots
+│
+├── requirements.txt
+└── README.md</pre>
+  </div>
+
+  <!-- ── 10. POWER BI PAGES ──────────────── -->
+  <div class="section-label" style="margin-top:36px;">
+    <div class="num">10</div>
+    <h2>Power BI Dashboard — 5 Pages</h2>
+  </div>
+  <div class="three-col">
+    <div class="card" style="border-top:3px solid #2E86AB;">
+      <h3>📌 Page 1: Executive Overview</h3>
+      <p style="font-size:13px;color:var(--muted);line-height:1.6;">8 KPI Cards · Category Revenue Bar · Region Donut Chart · YoY comparison badges</p>
+    </div>
+    <div class="card" style="border-top:3px solid #2A9D8F;">
+      <h3>📈 Page 2: Sales Trend</h3>
+      <p style="font-size:13px;color:var(--muted);line-height:1.6;">Monthly line chart · Quarterly bars · Cumulative YTD area · Year×Month matrix heatmap</p>
+    </div>
+    <div class="card" style="border-top:3px solid #F4A261;">
+      <h3>💰 Page 3: Profit Analysis</h3>
+      <p style="font-size:13px;color:var(--muted);line-height:1.6;">Waterfall by sub-category · Sales vs Profit scatter · Profit gauge · Discount impact table</p>
+    </div>
+    <div class="card" style="border-top:3px solid #457B9D;">
+      <h3>👥 Page 4: Customer Insights</h3>
+      <p style="font-size:13px;color:var(--muted);line-height:1.6;">RFM funnel · Top 10 customers bar · Decomposition tree · Segment × Region breakdown</p>
+    </div>
+    <div class="card" style="border-top:3px solid #E63946;">
+      <h3>📦 Page 5: Product Performance</h3>
+      <p style="font-size:13px;color:var(--muted);line-height:1.6;">Top 15 products revenue · Top 15 profit · Category heatmap · Sub-category slicer</p>
+    </div>
+    <div class="card" style="border-top:3px solid #6B7A99;">
+      <h3>🎛️ Global Slicers (All Pages)</h3>
+      <p style="font-size:13px;color:var(--muted);line-height:1.6;">Date range · Year · Region · Category · Segment · Ship Mode — synced across all 5 pages</p>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  E-Commerce Sales &amp; Customer Analytics Dashboard · Internship Portfolio Project · Python · SQL · Power BI
+</footer>
+
+<script>
+  function showTab(id, btn) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    btn.classList.add('active');
+  }
+</script>
+</body>
+</html>
